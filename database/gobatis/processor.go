@@ -11,7 +11,6 @@ import (
 	"github.com/xfali/gobatis"
 	"github.com/xfali/gobatis/datasource"
 	"github.com/xfali/gobatis/factory"
-	"github.com/xfali/neve/log"
 	"github.com/xfali/xlog"
 	"sync"
 	"time"
@@ -31,24 +30,24 @@ type DataSource struct {
 	ConnMaxLifetime int
 }
 
-type FactoryCreator func(source *DataSource) (factory.Factory, error)
+type FactoryCreatorWrapper func(f func(source *DataSource) (factory.Factory, error)) func(source *DataSource) (factory.Factory, error)
 
 type Processor struct {
 	logger      xlog.Logger
-	facCreator  FactoryCreator
+	facWrapper  FactoryCreatorWrapper
 	dataSources sync.Map
 }
 
-func NewProcessor(fac FactoryCreator) *Processor {
+func NewProcessor(logger xlog.Logger, wrapper FactoryCreatorWrapper) *Processor {
 	ret := &Processor{
-		logger: log.GetLogger(),
+		logger:     logger,
+		facWrapper: defaultWrapper,
 	}
 
-	if fac != nil {
-		ret.facCreator = fac
-	} else {
-		ret.facCreator = ret.createFactory
+	if wrapper != nil {
+		ret.facWrapper = wrapper
 	}
+
 	return ret
 }
 
@@ -64,7 +63,7 @@ func (p *Processor) Init(conf fig.Properties) error {
 	}
 
 	for k, v := range dss {
-		fac, err := p.facCreator(v)
+		fac, err := p.facWrapper(p.createFactory)(v)
 		if err != nil {
 			p.logger.Infof("init db failed")
 			return err
@@ -118,4 +117,8 @@ func (p *Processor) Close() error {
 		return true
 	})
 	return nil
+}
+
+func defaultWrapper(f func(source *DataSource) (factory.Factory, error)) func(source *DataSource) (factory.Factory, error) {
+	return f
 }

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/xfali/fig"
 	"github.com/xfali/goutils/idUtil"
 	"github.com/xfali/xlog"
 	"reflect"
@@ -60,6 +61,13 @@ func (v *RequestBodyLogWriter) Engine() interface{} {
 type LogHttpUtil struct {
 	Logger      xlog.Logger
 	LogRespBody bool
+}
+
+func NewLogHttpUtil(conf fig.Properties, logger xlog.Logger) *LogHttpUtil {
+	return &LogHttpUtil{
+		Logger:      logger,
+		LogRespBody: conf.Get("Log.ResponseBody", "false") == "true",
+	}
 }
 
 func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
