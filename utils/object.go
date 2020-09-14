@@ -10,25 +10,29 @@ import (
 	"strings"
 )
 
-func GetObjectName(o ...interface{}) string {
-	if len(o) == 0 {
+func GetObjectName(o interface{}) string {
+	if o == nil {
 		return ""
-	} else {
-		if o[0] == nil {
-			return ""
-		}
-		t := reflect.TypeOf(o[0])
-		if t.Kind() == reflect.Ptr {
-			t = t.Elem()
-		}
-		if t.Kind() == reflect.String {
-			return o[0].(string)
-		}
-
-		name := t.PkgPath()
-		if name != "" {
-			name = strings.Replace(name, "/", ".", -1) + "." + t.Name()
-		}
-		return name
 	}
+	t := reflect.TypeOf(o)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	if t.Kind() == reflect.String {
+		return o.(string)
+	}
+
+	return GetTypeName(t)
+}
+
+func GetTypeName(t reflect.Type) string {
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	name := t.PkgPath()
+	if name != "" {
+		name = strings.Replace(name, "/", ".", -1) + "." + t.Name()
+	}
+	return name
 }
