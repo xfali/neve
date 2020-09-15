@@ -45,7 +45,10 @@ func (c *DefaultContainer) RegisterByName(name string, o interface{}) error {
 		return errors.New("o must be a Pointer")
 	}
 
-	c.objectPool.Store(name, o)
+	_, loaded := c.objectPool.LoadOrStore(name, o)
+	if loaded {
+		return errors.New(name + " bean is exists. ")
+	}
 	return nil
 }
 

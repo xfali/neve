@@ -59,22 +59,25 @@ func (injector *DefaultInjector) injectStructFields(c container.Container, v ref
 		tag, ok := field.Tag.Lookup(injectTagName)
 		if ok {
 			fieldValue := v.Field(i)
-			if fieldValue.Kind() == reflect.Ptr {
-				fieldValue = fieldValue.Elem()
+			fieldType := fieldValue.Type()
+			if fieldType.Kind() == reflect.Ptr {
+				fieldType = fieldType.Elem()
 			}
 			if fieldValue.CanSet() {
-				switch fieldValue.Kind() {
+				switch fieldType.Kind() {
 				case reflect.Interface:
 					err := injector.injectInterface(c, fieldValue, tag)
 					if err != nil {
-						injector.Logger.Errorln(err)
+						injector.Logger.Errorf("Inject Field error: [%s: %s] %s\n ", utils.GetTypeName(t), field.Name, err.Error())
 					}
 				case reflect.Struct:
 					err := injector.injectStruct(c, fieldValue, tag)
 					if err != nil {
-						injector.Logger.Errorln(err)
+						injector.Logger.Errorf("Inject Field error: [%s: %s] %s\n ", utils.GetTypeName(t), field.Name, err.Error())
 					}
 				}
+			} else {
+				injector.Logger.Errorf("Inject failed: Field cannot SET [%s: %s]\n ", utils.GetTypeName(t), field.Name)
 			}
 		}
 	}
@@ -112,11 +115,14 @@ func (injector *DefaultInjector) injectInterface(c container.Container, v reflec
 		if len(matchValues) == 1 {
 			v.Set(reflect.ValueOf(matchValues[0]))
 			// cache to container
-			c.RegisterByName(utils.GetTypeName(vt), matchValues[0])
+			err := c.RegisterByName(utils.GetTypeName(vt), matchValues[0])
+			if err != nil {
+				injector.Logger.Warnln(err)
+			}
 			return nil
 		}
 	}
-	return errors.New("Inject nothing ")
+	return errors.New("Inject nothing, cannot find any Implementation: " + utils.GetTypeName(vt))
 }
 
 func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.Value, name string) error {
@@ -129,5 +135,5 @@ func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.V
 		utils.SafeSet(v, reflect.ValueOf(o))
 		return nil
 	}
-	return errors.New("Inject nothing ")
+	return errors.New("Inject nothing, cannot find any instance of  " + utils.GetTypeName(vt))
 }

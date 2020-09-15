@@ -9,6 +9,7 @@ import (
 	"github.com/xfali/neve/container"
 	"github.com/xfali/neve/injector"
 	"github.com/xfali/neve/log"
+	"io"
 	"testing"
 )
 
@@ -33,6 +34,8 @@ func (a *bImpl) Get() int {
 type dest struct {
 	A a `inject:""`
 	B a `inject:"b"`
+	// Would not inject
+	C io.Writer `inject:""`
 }
 
 func TestInjectInterface(t *testing.T) {
@@ -91,7 +94,9 @@ func TestInjectInterface(t *testing.T) {
 
 type dest2 struct {
 	A aImpl `inject:""`
-	B bImpl `inject:"b"`
+	B *bImpl `inject:"b"`
+	// Would not inject
+	C dest `inject:""`
 }
 
 func TestInjectStruct(t *testing.T) {

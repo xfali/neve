@@ -6,12 +6,15 @@
 package ctx
 
 import (
+	"errors"
 	"github.com/xfali/neve/container"
+	"github.com/xfali/neve/injector"
 	"github.com/xfali/neve/log"
 	"github.com/xfali/neve/processor"
 	"github.com/xfali/neve/utils"
 	"github.com/xfali/xlog"
 	"sync"
+	"sync/atomic"
 )
 
 type ApplicationEvent int
@@ -19,6 +22,12 @@ type ApplicationEvent int
 const (
 	ApplicationEventNone ApplicationEvent = iota
 	ApplicationEventInitialized
+)
+
+const (
+	statusNone int32 = iota
+	statusInitializing
+	statusInitialized
 )
 
 type ApplicationContext interface {
@@ -44,18 +53,25 @@ type ApplicationContextListener interface {
 type DefaultApplicationContext struct {
 	logger    xlog.Logger
 	container container.Container
+	injector  injector.Injector
 
 	listeners    []ApplicationContextListener
 	listenerLock sync.Mutex
 
 	processors []processor.Processor
+
+	curState int32
 }
 
 func NewDefaultApplicationContext() *DefaultApplicationContext {
-	return &DefaultApplicationContext{
+	ret := &DefaultApplicationContext{
 		logger:    log.GetLogger(),
 		container: container.New(),
+
+		curState: statusNone,
 	}
+	ret.injector = injector.New(ret.logger)
+	return ret
 }
 
 func (ctx *DefaultApplicationContext) Close() (err error) {
@@ -68,11 +84,22 @@ func (ctx *DefaultApplicationContext) Close() (err error) {
 	return
 }
 
+func (ctx *DefaultApplicationContext) isInitializing() bool {
+	return atomic.LoadInt32(&ctx.curState) == statusInitializing
+}
+
 func (ctx *DefaultApplicationContext) RegisterBean(o interface{}) error {
 	return ctx.RegisterBeanByName(utils.GetObjectName(o), o)
 }
 
 func (ctx *DefaultApplicationContext) RegisterBeanByName(name string, o interface{}) error {
+	if ctx.isInitializing() {
+		return errors.New("Initializing, cannot register new object. ")
+	}
+
+	if o == nil {
+		return nil
+	}
 	err := ctx.container.RegisterByName(name, o)
 	if err != nil {
 		return err
@@ -123,6 +150,14 @@ func (ctx *DefaultApplicationContext) NotifyListeners(e ApplicationEvent) {
 		for _, processor := range ctx.processors {
 			processor.Process()
 		}
+		// 第一次初始化，注入所有对象
+		if atomic.CompareAndSwapInt32(&ctx.curState, statusNone, statusInitializing) {
+			ctx.injectAll()
+			// 初始化完成
+			if !atomic.CompareAndSwapInt32(&ctx.curState, statusInitializing, statusInitialized) {
+				ctx.logger.Fatal("Cannot be here!")
+			}
+		}
 	}
 
 	ctx.listenerLock.Lock()
@@ -132,3 +167,12 @@ func (ctx *DefaultApplicationContext) NotifyListeners(e ApplicationEvent) {
 	}
 }
 
+func (ctx *DefaultApplicationContext) injectAll() {
+	ctx.container.Scan(func(key string, value interface{}) bool {
+		err := ctx.injector.Inject(ctx.container, value)
+		if err != nil {
+			ctx.logger.Errorln("Inject failed: ", err)
+		}
+		return true
+	})
+}
