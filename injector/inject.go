@@ -92,18 +92,31 @@ func (injector *DefaultInjector) injectInterface(c container.Container, v reflec
 		v.Set(reflect.ValueOf(o))
 		return nil
 	} else {
+		//自动注入
+		var matchValues []interface{}
 		c.Scan(func(key string, value interface{}) bool {
+			//指定名称注册的对象直接跳过，因为在container.Get未满足，所以认定不是用户想要注入的对象
+			if key != utils.GetObjectName(value) {
+				return true
+			}
 			ot := reflect.TypeOf(value)
 			if ot.Implements(vt) {
-				v.Set(reflect.ValueOf(value))
-				c.RegisterByName(utils.GetTypeName(vt), value)
-				return false
+				matchValues = append(matchValues, value)
+				if len(matchValues) > 1 {
+					panic("Autowired bean found more than 1")
+				}
+				return true
 			}
 			return true
 		})
-		return nil
+		if len(matchValues) == 1 {
+			v.Set(reflect.ValueOf(matchValues[0]))
+			// cache to container
+			c.RegisterByName(utils.GetTypeName(vt), matchValues[0])
+			return nil
+		}
 	}
-	return nil
+	return errors.New("Inject nothing ")
 }
 
 func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.Value, name string) error {
@@ -116,5 +129,5 @@ func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.V
 		utils.SafeSet(v, reflect.ValueOf(o))
 		return nil
 	}
-	return nil
+	return errors.New("Inject nothing ")
 }

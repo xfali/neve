@@ -17,7 +17,6 @@ type a interface {
 }
 
 type aImpl struct {
-
 }
 
 func (a *aImpl) Get() int {
@@ -25,7 +24,6 @@ func (a *aImpl) Get() int {
 }
 
 type bImpl struct {
-
 }
 
 func (a *bImpl) Get() int {
@@ -37,22 +35,115 @@ type dest struct {
 	B a `inject:"b"`
 }
 
-func TestInject(t *testing.T) {
-	c := container.New()
-	c.Register(&aImpl{})
-	c.RegisterByName("b", &bImpl{})
-	i := injector.New(log.GetLogger())
+func TestInjectInterface(t *testing.T) {
+	t.Run("inject once", func(t *testing.T) {
+		c := container.New()
+		c.Register(&aImpl{})
+		c.RegisterByName("b", &bImpl{})
+		i := injector.New(log.GetLogger())
 
-	d := dest{}
-	err := i.Inject(c, &d)
-	if err != nil {
-		t.Fatal(err)
-	}
+		d := dest{}
+		err := i.Inject(c, &d)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if d.A == nil || d.A.Get() != 1 {
-		t.Fatal("inject A failed")
-	}
-	if d.B == nil || d.B.Get() != 2 {
-		t.Fatal("inject B failed")
-	}
+		if d.A == nil || d.A.Get() != 1 {
+			t.Fatal("inject A failed")
+		}
+		if d.B == nil || d.B.Get() != 2 {
+			t.Fatal("inject B failed")
+		}
+	})
+
+	t.Run("inject twice", func(t *testing.T) {
+		c := container.New()
+		c.Register(&aImpl{})
+		c.RegisterByName("b", &bImpl{})
+		i := injector.New(log.GetLogger())
+
+		d := dest{}
+		err := i.Inject(c, &d)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if d.A == nil || d.A.Get() != 1 {
+			t.Fatal("inject A failed")
+		}
+		if d.B == nil || d.B.Get() != 2 {
+			t.Fatal("inject B failed")
+		}
+
+		err = i.Inject(c, &d)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if d.A == nil || d.A.Get() != 1 {
+			t.Fatal("inject A failed")
+		}
+		if d.B == nil || d.B.Get() != 2 {
+			t.Fatal("inject B failed")
+		}
+	})
+}
+
+type dest2 struct {
+	A aImpl `inject:""`
+	B bImpl `inject:"b"`
+}
+
+func TestInjectStruct(t *testing.T) {
+	t.Run("inject once", func(t *testing.T) {
+		c := container.New()
+		c.Register(&aImpl{})
+		c.RegisterByName("b", &bImpl{})
+		i := injector.New(log.GetLogger())
+
+		d := dest2{}
+		err := i.Inject(c, &d)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if d.A.Get() != 1 {
+			t.Fatal("inject A failed")
+		}
+		if d.B.Get() != 2 {
+			t.Fatal("inject B failed")
+		}
+	})
+
+	t.Run("inject twice", func(t *testing.T) {
+		c := container.New()
+		c.Register(&aImpl{})
+		c.RegisterByName("b", &bImpl{})
+		i := injector.New(log.GetLogger())
+
+		d := dest2{}
+		err := i.Inject(c, &d)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if d.A.Get() != 1 {
+			t.Fatal("inject A failed")
+		}
+		if d.B.Get() != 2 {
+			t.Fatal("inject B failed")
+		}
+
+		err = i.Inject(c, &d)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if d.A.Get() != 1 {
+			t.Fatal("inject A failed")
+		}
+		if d.B.Get() != 2 {
+			t.Fatal("inject B failed")
+		}
+	})
 }
