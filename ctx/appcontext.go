@@ -9,7 +9,6 @@ import (
 	"errors"
 	"github.com/xfali/neve/container"
 	"github.com/xfali/neve/injector"
-	"github.com/xfali/neve/log"
 	"github.com/xfali/neve/processor"
 	"github.com/xfali/neve/utils"
 	"github.com/xfali/xlog"
@@ -50,6 +49,8 @@ type ApplicationContextListener interface {
 	OnEvent(e ApplicationEvent, ctx ApplicationContext)
 }
 
+type Opt func(*DefaultApplicationContext)
+
 type DefaultApplicationContext struct {
 	logger    xlog.Logger
 	container container.Container
@@ -63,14 +64,18 @@ type DefaultApplicationContext struct {
 	curState int32
 }
 
-func NewDefaultApplicationContext() *DefaultApplicationContext {
+func NewDefaultApplicationContext(opts ...Opt) *DefaultApplicationContext {
 	ret := &DefaultApplicationContext{
-		logger:    log.GetLogger(),
+		logger:    xlog.GetLogger(),
 		container: container.New(),
 
 		curState: statusNone,
 	}
-	ret.injector = injector.New(ret.logger)
+	ret.injector = injector.New(injector.OptSetLogger(ret.logger))
+
+	for _, opt := range opts {
+		opt(ret)
+	}
 	return ret
 }
 
@@ -175,4 +180,22 @@ func (ctx *DefaultApplicationContext) injectAll() {
 		}
 		return true
 	})
+}
+
+func OptSetContainer(container container.Container) Opt {
+	return func(context *DefaultApplicationContext) {
+		context.container = container
+	}
+}
+
+func OptSetLogger(logger xlog.Logger) Opt {
+	return func(context *DefaultApplicationContext) {
+		context.logger = logger
+	}
+}
+
+func OptSetInjector(injector injector.Injector) Opt {
+	return func(context *DefaultApplicationContext) {
+		context.injector = injector
+	}
 }

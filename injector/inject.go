@@ -22,14 +22,20 @@ type Injector interface {
 }
 
 type DefaultInjector struct {
-	Logger    xlog.Logger
+	logger    xlog.Logger
 	recursive bool
 }
 
-func New(log xlog.Logger) *DefaultInjector {
-	return &DefaultInjector{
-		Logger: log,
+type Opt func(*DefaultInjector)
+
+func New(opts ...Opt) *DefaultInjector {
+	ret := &DefaultInjector{
+		logger: xlog.GetLogger(),
 	}
+	for _, opt := range opts {
+		opt(ret)
+	}
+	return ret
 }
 
 func (injector *DefaultInjector) Inject(c container.Container, o interface{}) error {
@@ -69,16 +75,16 @@ func (injector *DefaultInjector) injectStructFields(c container.Container, v ref
 				case reflect.Interface:
 					err := injector.injectInterface(c, fieldValue, tag)
 					if err != nil {
-						injector.Logger.Errorf("Inject Field error: [%s: %s] %s\n ", utils.GetTypeName(t), field.Name, err.Error())
+						injector.logger.Errorf("Inject Field error: [%s: %s] %s\n ", utils.GetTypeName(t), field.Name, err.Error())
 					}
 				case reflect.Struct:
 					err := injector.injectStruct(c, fieldValue, tag)
 					if err != nil {
-						injector.Logger.Errorf("Inject Field error: [%s: %s] %s\n ", utils.GetTypeName(t), field.Name, err.Error())
+						injector.logger.Errorf("Inject Field error: [%s: %s] %s\n ", utils.GetTypeName(t), field.Name, err.Error())
 					}
 				}
 			} else {
-				injector.Logger.Errorf("Inject failed: Field cannot SET [%s: %s]\n ", utils.GetTypeName(t), field.Name)
+				injector.logger.Errorf("Inject failed: Field cannot SET [%s: %s]\n ", utils.GetTypeName(t), field.Name)
 			}
 		}
 	}
@@ -118,7 +124,7 @@ func (injector *DefaultInjector) injectInterface(c container.Container, v reflec
 			// cache to container
 			err := c.RegisterByName(utils.GetTypeName(vt), matchValues[0])
 			if err != nil {
-				injector.Logger.Warnln(err)
+				injector.logger.Warnln(err)
 			}
 			return nil
 		}
@@ -146,5 +152,17 @@ func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.V
 		return injector.injectStructFields(c, v)
 	} else {
 		return errors.New("Inject nothing, cannot find any instance of  " + utils.GetTypeName(vt))
+	}
+}
+
+func OptSetLogger(v xlog.Logger) Opt {
+	return func(injector *DefaultInjector) {
+		injector.logger = v
+	}
+}
+
+func OptSetRecursive(recursive bool) Opt {
+	return func(injector *DefaultInjector) {
+		injector.recursive = recursive
 	}
 }

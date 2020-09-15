@@ -28,7 +28,9 @@ type FileConfigApplication struct {
 	ctx    ctx.ApplicationContext
 }
 
-func NewFileConfigApplication(configPath string) *FileConfigApplication {
+type Opt func(*FileConfigApplication)
+
+func NewFileConfigApplication(configPath string, opts ...Opt) *FileConfigApplication {
 	logger := log.GetLogger()
 	prop, err := fig.LoadYamlFile(configPath)
 	if err != nil {
@@ -38,6 +40,10 @@ func NewFileConfigApplication(configPath string) *FileConfigApplication {
 	ret := &FileConfigApplication{
 		config: prop,
 		ctx:    ctx.NewDefaultApplicationContext(),
+	}
+
+	for _, opt := range opts {
+		opt(ret)
 	}
 
 	for _, v := range processors {
@@ -59,6 +65,12 @@ func (app *FileConfigApplication) Run() error {
 	app.ctx.NotifyListeners(ctx.ApplicationEventInitialized)
 	HandlerSignal(app.ctx.Close)
 	return nil
+}
+
+func OptSetApplicationContext(ctx ctx.ApplicationContext) Opt {
+	return func(application *FileConfigApplication) {
+		application.ctx = ctx
+	}
 }
 
 func HandlerSignal(closers ...func() error) {
