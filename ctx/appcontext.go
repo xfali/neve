@@ -6,6 +6,7 @@
 package ctx
 
 import (
+	"github.com/xfali/neve/container"
 	"github.com/xfali/neve/log"
 	"github.com/xfali/neve/processor"
 	"github.com/xfali/neve/utils"
@@ -21,16 +22,15 @@ const (
 )
 
 type ApplicationContext interface {
-	AddProcessor(processor.Processor)
-
 	RegisterBean(o interface{}) error
 	RegisterBeanByName(name string, o interface{}) error
 
-	GetBean(name string) interface{}
-	GetBeanByType(o interface{}) interface{}
+	GetBean(name string) (interface{}, bool)
+	GetBeanByType(o interface{}) bool
+
+	AddProcessor(processor.Processor)
 
 	AddListener(ApplicationContextListener)
-
 	NotifyListeners(ApplicationEvent)
 
 	Close() error
@@ -42,8 +42,8 @@ type ApplicationContextListener interface {
 }
 
 type DefaultApplicationContext struct {
-	logger     xlog.Logger
-	objectPool sync.Map
+	logger    xlog.Logger
+	container container.Container
 
 	listeners    []ApplicationContextListener
 	listenerLock sync.Mutex
@@ -53,7 +53,8 @@ type DefaultApplicationContext struct {
 
 func NewDefaultApplicationContext() *DefaultApplicationContext {
 	return &DefaultApplicationContext{
-		logger: log.GetLogger(),
+		logger:    log.GetLogger(),
+		container: container.New(),
 	}
 }
 
@@ -72,7 +73,10 @@ func (ctx *DefaultApplicationContext) RegisterBean(o interface{}) error {
 }
 
 func (ctx *DefaultApplicationContext) RegisterBeanByName(name string, o interface{}) error {
-	ctx.objectPool.Store(name, o)
+	err := ctx.container.RegisterByName(name, o)
+	if err != nil {
+		return err
+	}
 
 	for _, processor := range ctx.processors {
 		_, err := processor.HandleBean(o)
@@ -95,11 +99,12 @@ func (ctx *DefaultApplicationContext) RegisterBeanByName(name string, o interfac
 	return nil
 }
 
-func (ctx *DefaultApplicationContext) GetBean(name string) interface{} {
-	if o, ok := ctx.objectPool.Load(name); ok {
-		return o
-	}
-	return nil
+func (ctx *DefaultApplicationContext) GetBean(name string) (interface{}, bool) {
+	return ctx.container.Get(name)
+}
+
+func (ctx *DefaultApplicationContext) GetBeanByType(o interface{}) bool {
+	return ctx.container.GetByType(o)
 }
 
 func (ctx *DefaultApplicationContext) AddProcessor(p processor.Processor) {
@@ -127,6 +132,3 @@ func (ctx *DefaultApplicationContext) NotifyListeners(e ApplicationEvent) {
 	}
 }
 
-func (ctx *DefaultApplicationContext) GetBeanByType(o interface{}) interface{} {
-	return ctx.GetBean(utils.GetObjectName(o))
-}

@@ -36,3 +36,17 @@ func GetTypeName(t reflect.Type) string {
 	}
 	return name
 }
+
+func SafeSet(dest, src reflect.Value) {
+	if dest.Kind() == reflect.Ptr {
+		dest = dest.Elem()
+	}
+
+	if src.Kind() == reflect.Ptr {
+		src = src.Elem()
+	}
+
+	if dest.CanSet() {
+		dest.Set(src)
+	}
+}
