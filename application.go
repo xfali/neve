@@ -49,7 +49,10 @@ func NewFileConfigApplication(configPath string, opts ...Opt) *FileConfigApplica
 	}
 
 	for _, v := range processors {
-		v.Init(prop, c)
+		err := v.Init(prop, c)
+		if err != nil {
+			logger.Panicln(err)
+		}
 		ret.ctx.AddProcessor(v)
 	}
 	return ret
@@ -80,6 +83,7 @@ func HandlerSignal(closers ...func() error) {
 		ch = make(chan os.Signal, 1)
 	)
 	signal.Notify(ch, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
+	logger := log.GetLogger()
 	for {
 		si := <-ch
 		switch si {
@@ -87,16 +91,19 @@ func HandlerSignal(closers ...func() error) {
 			time.Sleep(time.Second * 2)
 			xlog.Infof("get a signal %s, stop the server", si.String())
 			for i := range closers {
-				closers[i]()
+				err := closers[i]()
+				if err != nil {
+					logger.Errorln(err)
+				}
 			}
 			time.Sleep(time.Second)
+			xlog.Infof("------ Process exited ------")
 			return
 		case syscall.SIGHUP:
 		default:
 			return
 		}
 	}
-	xlog.Infof("------ Process exited ------")
 }
 
 var processors []processor.Processor

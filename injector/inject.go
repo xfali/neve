@@ -143,7 +143,9 @@ func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.V
 		if vt.Kind() == reflect.Ptr {
 			v.Set(ov)
 		} else {
-			v.Set(ov.Elem())
+			// 只允许注入指针类型
+			injector.logger.Errorf("Inject struct: [%s] failed: field must be pointer. ", utils.GetTypeName(vt))
+			//v.Set(ov.Elem())
 		}
 		return nil
 	}

@@ -22,7 +22,7 @@ import (
 
 type webBean struct {
 	V string `fig:"Log.Level"`
-	P print `inject:"testProcess.print"`
+	P print  `inject:"testProcess.print"`
 }
 
 func (b *webBean) Register(engine gin.IRouter) {

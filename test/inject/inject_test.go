@@ -132,9 +132,9 @@ func TestInjectInterface(t *testing.T) {
 }
 
 type dest2 struct {
-	A aImpl `inject:""`
-	B *bImpl `inject:"b"`
-	B2 bImpl `inject:"b"`
+	A  aImpl  `inject:""`
+	B  *bImpl `inject:"b"`
+	B2 bImpl  `inject:"b"`
 	// Would not inject
 	C dest `inject:""`
 }
@@ -229,7 +229,11 @@ func TestInjectStruct(t *testing.T) {
 		if d.B.Get() != 2 {
 			t.Fatal("inject B failed")
 		}
-		if d.B2.Get() != 3 {
+		//if d.B2.Get() != 3 {
+		//	t.Fatal("inject B2 failed")
+		//}
+		// struct只允许注入指针类型
+		if d.B2.Get() != 2 {
 			t.Fatal("inject B2 failed")
 		}
 	})
