@@ -22,7 +22,8 @@ type Injector interface {
 }
 
 type DefaultInjector struct {
-	Logger xlog.Logger
+	Logger    xlog.Logger
+	recursive bool
 }
 
 func New(log xlog.Logger) *DefaultInjector {
@@ -106,7 +107,7 @@ func (injector *DefaultInjector) injectInterface(c container.Container, v reflec
 			if ot.Implements(vt) {
 				matchValues = append(matchValues, value)
 				if len(matchValues) > 1 {
-					panic("Autowired bean found more than 1")
+					panic("Auto Inject bean found more than 1")
 				}
 				return true
 			}
@@ -132,8 +133,18 @@ func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.V
 	}
 	o, ok := c.Get(name)
 	if ok {
-		utils.SafeSet(v, reflect.ValueOf(o))
+		ov := reflect.ValueOf(o)
+		if vt.Kind() == reflect.Ptr {
+			v.Set(ov)
+		} else {
+			v.Set(ov.Elem())
+		}
 		return nil
 	}
-	return errors.New("Inject nothing, cannot find any instance of  " + utils.GetTypeName(vt))
+
+	if injector.recursive {
+		return injector.injectStructFields(c, v)
+	} else {
+		return errors.New("Inject nothing, cannot find any instance of  " + utils.GetTypeName(vt))
+	}
 }
