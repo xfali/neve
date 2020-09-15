@@ -5,7 +5,10 @@
 
 package processor
 
-import "github.com/xfali/fig"
+import (
+	"github.com/xfali/fig"
+	"github.com/xfali/neve/container"
+)
 
 type ValueProcessor struct {
 	conf fig.Properties
@@ -15,12 +18,12 @@ func NewValueProcessor() *ValueProcessor {
 	return &ValueProcessor{}
 }
 
-func (p *ValueProcessor) Init(conf fig.Properties) error {
+func (p *ValueProcessor) Init(conf fig.Properties, container container.Container) error {
 	p.conf = conf
 	return nil
 }
 
-func (p *ValueProcessor) HandleBean(o interface{}) (bool, error) {
+func (p *ValueProcessor) Classify(o interface{}) (bool, error) {
 	return true, fig.Fill(p.conf, o)
 }
 

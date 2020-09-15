@@ -7,6 +7,7 @@ package neve
 
 import (
 	"github.com/xfali/fig"
+	"github.com/xfali/neve/container"
 	"github.com/xfali/neve/ctx"
 	"github.com/xfali/neve/log"
 	"github.com/xfali/neve/processor"
@@ -37,9 +38,10 @@ func NewFileConfigApplication(configPath string, opts ...Opt) *FileConfigApplica
 		logger.Fatalln("load config file failed: ", err)
 		return nil
 	}
+	c := container.New()
 	ret := &FileConfigApplication{
 		config: prop,
-		ctx:    ctx.NewDefaultApplicationContext(),
+		ctx:    ctx.NewDefaultApplicationContext(ctx.OptSetContainer(c)),
 	}
 
 	for _, opt := range opts {
@@ -47,7 +49,7 @@ func NewFileConfigApplication(configPath string, opts ...Opt) *FileConfigApplica
 	}
 
 	for _, v := range processors {
-		v.Init(prop)
+		v.Init(prop, c)
 		ret.ctx.AddProcessor(v)
 	}
 	return ret

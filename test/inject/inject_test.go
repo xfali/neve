@@ -8,7 +8,6 @@ package inject
 import (
 	"github.com/xfali/neve/container"
 	"github.com/xfali/neve/injector"
-	"github.com/xfali/neve/log"
 	"io"
 	"testing"
 )
@@ -47,7 +46,7 @@ func TestInjectInterface(t *testing.T) {
 		c := container.New()
 		c.Register(&aImpl{})
 		c.RegisterByName("b", &bImpl{})
-		i := injector.New(log.GetLogger())
+		i := injector.New()
 
 		d := dest{}
 		err := i.Inject(c, &d)
@@ -67,7 +66,7 @@ func TestInjectInterface(t *testing.T) {
 		c := container.New()
 		c.Register(&aImpl{})
 		c.RegisterByName("b", &bImpl{})
-		i := injector.New(log.GetLogger())
+		i := injector.New()
 
 		d := dest{}
 		err := i.Inject(c, &d)
@@ -100,7 +99,7 @@ func TestInjectInterface(t *testing.T) {
 		c.Register(&aImpl{})
 		b := &bImpl{}
 		c.RegisterByName("b", b)
-		i := injector.New(log.GetLogger())
+		i := injector.New()
 
 		d := dest{}
 		err := i.Inject(c, &d)
@@ -145,7 +144,7 @@ func TestInjectStruct(t *testing.T) {
 		c := container.New()
 		c.Register(&aImpl{})
 		c.RegisterByName("b", &bImpl{})
-		i := injector.New(log.GetLogger())
+		i := injector.New()
 
 		d := dest2{}
 		err := i.Inject(c, &d)
@@ -165,7 +164,7 @@ func TestInjectStruct(t *testing.T) {
 		c := container.New()
 		c.Register(&aImpl{})
 		c.RegisterByName("b", &bImpl{})
-		i := injector.New(log.GetLogger())
+		i := injector.New()
 
 		d := dest2{}
 		err := i.Inject(c, &d)
@@ -199,7 +198,7 @@ func TestInjectStruct(t *testing.T) {
 		c.Register(&aImpl{})
 		b := &bImpl{}
 		c.RegisterByName("b", b)
-		i := injector.New(log.GetLogger())
+		i := injector.New()
 
 		d := dest2{}
 		err := i.Inject(c, &d)

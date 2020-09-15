@@ -11,6 +11,7 @@ import (
 	"github.com/xfali/gobatis"
 	"github.com/xfali/gobatis/datasource"
 	"github.com/xfali/gobatis/factory"
+	"github.com/xfali/neve/container"
 	"github.com/xfali/xlog"
 	"sync"
 	"time"
@@ -51,7 +52,7 @@ func NewProcessor(logger xlog.Logger, wrapper FactoryCreatorWrapper) *Processor 
 	return ret
 }
 
-func (p *Processor) Init(conf fig.Properties) error {
+func (p *Processor) Init(conf fig.Properties, container container.Container) error {
 	dss := map[string]*DataSource{}
 	err := conf.GetValue(BuildinValueDataSources, &dss)
 	if err != nil {
@@ -65,16 +66,19 @@ func (p *Processor) Init(conf fig.Properties) error {
 	for k, v := range dss {
 		fac, err := p.facWrapper(p.createFactory)(v)
 		if err != nil {
-			p.logger.Infof("init db failed")
+			p.logger.Errorln("init db failed")
 			return err
 		}
-		p.dataSources.Store(k, gobatis.NewSessionManager(fac))
+		sm := gobatis.NewSessionManager(fac)
+		p.dataSources.Store(k, sm)
+		//添加到注入容器
+		container.RegisterByName(k, sm)
 	}
 
 	return nil
 }
 
-func (p *Processor) HandleBean(o interface{}) (bool, error) {
+func (p *Processor) Classify(o interface{}) (bool, error) {
 	switch v := o.(type) {
 	case Component:
 		err := p.parseBean(v)

@@ -111,7 +111,7 @@ func (ctx *DefaultApplicationContext) RegisterBeanByName(name string, o interfac
 	}
 
 	for _, processor := range ctx.processors {
-		_, err := processor.HandleBean(o)
+		_, err := processor.Classify(o)
 		if err != nil {
 			ctx.logger.Errorln(err)
 		}

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/xfali/fig"
+	"github.com/xfali/neve/container"
 	"github.com/xfali/neve/log"
 	"github.com/xfali/neve/web/ginImpl/midware"
 	"github.com/xfali/neve/web/result"
@@ -40,12 +41,12 @@ func NewProcessor() *Processor {
 	}
 }
 
-func (p *Processor) Init(conf fig.Properties) error {
+func (p *Processor) Init(conf fig.Properties, container container.Container) error {
 	p.conf = conf
 	return nil
 }
 
-func (p *Processor) HandleBean(o interface{}) (bool, error) {
+func (p *Processor) Classify(o interface{}) (bool, error) {
 	switch v := o.(type) {
 	case Component:
 		err := p.parseBean(v, o)

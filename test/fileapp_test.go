@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/xfali/fig"
 	"github.com/xfali/neve"
+	"github.com/xfali/neve/container"
 	"github.com/xfali/neve/log"
 	"github.com/xfali/neve/processor"
 	"github.com/xfali/neve/web/ginImpl"
@@ -21,10 +22,7 @@ import (
 
 type webBean struct {
 	V string `fig:"Log.Level"`
-}
-
-func (b *webBean) Print(str string) {
-	fmt.Println(str)
+	P print `inject:"testProcess.print"`
 }
 
 func (b *webBean) Register(engine gin.IRouter) {
@@ -55,11 +53,18 @@ type print interface {
 	Print(str string)
 }
 
-func (p *testProcess) Init(conf fig.Properties) error {
+type dummy struct{}
+
+func (d *dummy) Print(str string) {
+	fmt.Println("dummy!", str)
+}
+
+func (p *testProcess) Init(conf fig.Properties, container container.Container) error {
+	container.RegisterByName("testProcess.print", &dummy{})
 	return nil
 }
 
-func (p *testProcess) HandleBean(o interface{}) (bool, error) {
+func (p *testProcess) Classify(o interface{}) (bool, error) {
 	switch v := o.(type) {
 	case print:
 		v.Print("test")
