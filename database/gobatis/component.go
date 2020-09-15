@@ -12,5 +12,5 @@ type Component interface {
 	DataSource() string
 	// Param: o - 注入SessionManager的目的对象
 	// Return: 注入成功返回true，否则返回false
-	InjectSessionManager(manager *gobatis.SessionManager) error
+	SetSessionManager(manager *gobatis.SessionManager) error
 }

@@ -75,10 +75,9 @@ func (p *Processor) Init(conf fig.Properties) error {
 }
 
 func (p *Processor) HandleBean(o interface{}) (bool, error) {
-	switch o.(type) {
+	switch v := o.(type) {
 	case Component:
-		comp := o.(Component)
-		err := p.parseBean(comp)
+		err := p.parseBean(v)
 		return true, err
 	}
 	return false, nil
@@ -87,7 +86,7 @@ func (p *Processor) HandleBean(o interface{}) (bool, error) {
 func (p *Processor) parseBean(comp Component) error {
 	name := comp.DataSource()
 	if v, ok := p.dataSources.Load(name); ok {
-		comp.InjectSessionManager(v.(*gobatis.SessionManager))
+		comp.SetSessionManager(v.(*gobatis.SessionManager))
 	}
 	p.logger.Errorln("DataSource Name found: ", name)
 	return errors.New("DataSource Name found. ")

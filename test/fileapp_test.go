@@ -6,7 +6,9 @@
 package test
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/xfali/fig"
 	"github.com/xfali/neve"
 	"github.com/xfali/neve/log"
 	"github.com/xfali/neve/processor"
@@ -19,6 +21,10 @@ import (
 
 type webBean struct {
 	V string `fig:"Log.Level"`
+}
+
+func (b *webBean) Print(str string) {
+	fmt.Println(str)
 }
 
 func (b *webBean) Register(engine gin.IRouter) {
@@ -36,9 +42,35 @@ func (b *webBean) Register(engine gin.IRouter) {
 }
 
 func TestWebAndValue(t *testing.T) {
-	neve.RegisterProcessor(ginImpl.NewProcessor(), processor.NewValueProcessor())
+	neve.RegisterProcessor(ginImpl.NewProcessor(), processor.NewValueProcessor(), &testProcess{})
 
 	app := neve.NewFileConfigApplication("assets/config-test.json")
 	app.RegisterBean(&webBean{})
 	app.Run()
+}
+
+type testProcess struct{}
+
+type print interface {
+	Print(str string)
+}
+
+func (p *testProcess) Init(conf fig.Properties) error {
+	return nil
+}
+
+func (p *testProcess) HandleBean(o interface{}) (bool, error) {
+	switch v := o.(type) {
+	case print:
+		v.Print("test")
+	}
+	return true, nil
+}
+
+func (p *testProcess) Process() error {
+	return nil
+}
+
+func (p *testProcess) Close() error {
+	return nil
 }

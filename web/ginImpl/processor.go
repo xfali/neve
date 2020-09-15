@@ -46,10 +46,9 @@ func (p *Processor) Init(conf fig.Properties) error {
 }
 
 func (p *Processor) HandleBean(o interface{}) (bool, error) {
-	switch o.(type) {
+	switch v := o.(type) {
 	case Component:
-		comp := o.(Component)
-		err := p.parseBean(comp, o)
+		err := p.parseBean(v, o)
 		return true, err
 	}
 	return false, nil
