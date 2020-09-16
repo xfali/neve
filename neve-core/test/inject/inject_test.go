@@ -6,7 +6,6 @@
 package inject
 
 import (
-	"github.com/xfali/neve/neve-core"
 	"github.com/xfali/neve/neve-core/container"
 	"github.com/xfali/neve/neve-core/injector"
 	"io"

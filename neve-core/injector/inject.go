@@ -95,7 +95,7 @@ func (injector *DefaultInjector) injectStructFields(c container.Container, v ref
 func (injector *DefaultInjector) injectInterface(c container.Container, v reflect.Value, name string) error {
 	vt := v.Type()
 	if name == "" {
-		name = utils.GetTypeName(vt)
+		name = refection.GetTypeName(vt)
 	}
 	o, ok := c.Get(name)
 	if ok {
@@ -135,7 +135,7 @@ func (injector *DefaultInjector) injectInterface(c container.Container, v reflec
 func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.Value, name string) error {
 	vt := v.Type()
 	if name == "" {
-		name = utils.GetTypeName(vt)
+		name = refection.GetTypeName(vt)
 	}
 	o, ok := c.Get(name)
 	if ok {
