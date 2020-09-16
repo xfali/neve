@@ -310,8 +310,7 @@ func TestInjectFunc(t *testing.T) {
 		x := 0
 		x1 := &x
 		f1 := func() a {
-			return &aImpl{
-			}
+			return &aImpl{}
 		}
 		f2 := func() *bImpl {
 			return &bImpl{i: *x1}
@@ -356,8 +355,7 @@ func TestInjectFunc(t *testing.T) {
 		x := 0
 		x1 := &x
 		f1 := func() a {
-			return &aImpl{
-			}
+			return &aImpl{}
 		}
 		f2 := func() *bImpl {
 			return &bImpl{i: *x1}
