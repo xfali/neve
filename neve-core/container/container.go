@@ -7,7 +7,7 @@ package container
 
 import (
 	"errors"
-	"github.com/xfali/neve/utils"
+	"github.com/xfali/neve/neve-utils/reflection"
 	"reflect"
 	"sync"
 )
@@ -44,7 +44,7 @@ func (c *DefaultContainer) RegisterByName(name string, o interface{}) error {
 	}
 
 	if name == "" {
-		name = utils.GetObjectName(o)
+		name = reflection.GetObjectName(o)
 		// func
 		if name == "" {
 			name = beanDefinition.Name()
@@ -67,7 +67,7 @@ func (c *DefaultContainer) Get(name string) (BeanDefinition, bool) {
 
 func (c *DefaultContainer) GetByType(o interface{}) bool {
 	v := reflect.ValueOf(o)
-	d, ok := c.Get(utils.GetTypeName(v.Type()))
+	d, ok := c.Get(reflection.GetTypeName(v.Type()))
 	if ok {
 		v.Set(d.Value())
 	}
