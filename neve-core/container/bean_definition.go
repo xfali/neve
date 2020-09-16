@@ -7,7 +7,7 @@ package container
 
 import (
 	"errors"
-	"github.com/xfali/neve/neve-utils/refection"
+	"github.com/xfali/neve/neve-utils/reflection"
 	"reflect"
 )
 
@@ -51,13 +51,13 @@ func createBeanDefinition(o interface{}) (BeanDefinition, error) {
 		return newFunctionDefinition(o), nil
 	}
 
-	return nil, errors.New("Cannot handle this type: " + refection.GetTypeName(t))
+	return nil, errors.New("Cannot handle this type: " + reflection.GetTypeName(t))
 }
 
 func newObjectDefinition(o interface{}) *objectDefinition {
 	t := reflect.TypeOf(o)
 	return &objectDefinition{
-		name: refection.GetTypeName(t),
+		name: reflection.GetTypeName(t),
 		o:    o,
 		t:    t,
 	}
@@ -113,7 +113,7 @@ func newFunctionDefinition(o interface{}) *functionDefinition {
 	fn := reflect.ValueOf(o)
 	return &functionDefinition{
 		o:    o,
-		name: refection.GetTypeName(ot),
+		name: reflection.GetTypeName(ot),
 		fn:   fn,
 		t:    ot,
 	}

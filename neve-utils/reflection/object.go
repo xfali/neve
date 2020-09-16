@@ -3,7 +3,7 @@
 // @version V1.0
 // Description:
 
-package refection
+package reflection
 
 import (
 	"reflect"

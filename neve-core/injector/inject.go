@@ -9,6 +9,7 @@ import (
 	"errors"
 	"github.com/xfali/neve/neve-core/container"
 	"github.com/xfali/neve/neve-utils/refection"
+	"github.com/xfali/neve/neve-utils/reflection"
 	"github.com/xfali/xlog"
 	"reflect"
 )
@@ -75,16 +76,16 @@ func (injector *DefaultInjector) injectStructFields(c container.Container, v ref
 				case reflect.Interface:
 					err := injector.injectInterface(c, fieldValue, tag)
 					if err != nil {
-						injector.logger.Errorf("Inject Field error: [%s: %s] %s\n ", refection.GetTypeName(t), field.Name, err.Error())
+						injector.logger.Errorf("Inject Field error: [%s: %s] %s\n ", reflection.GetTypeName(t), field.Name, err.Error())
 					}
 				case reflect.Struct:
 					err := injector.injectStruct(c, fieldValue, tag)
 					if err != nil {
-						injector.logger.Errorf("Inject Field error: [%s: %s] %s\n ", refection.GetTypeName(t), field.Name, err.Error())
+						injector.logger.Errorf("Inject Field error: [%s: %s] %s\n ", reflection.GetTypeName(t), field.Name, err.Error())
 					}
 				}
 			} else {
-				injector.logger.Errorf("Inject failed: Field cannot SET [%s: %s]\n ", refection.GetTypeName(t), field.Name)
+				injector.logger.Errorf("Inject failed: Field cannot SET [%s: %s]\n ", reflection.GetTypeName(t), field.Name)
 			}
 		}
 	}
