@@ -16,10 +16,10 @@ type Container interface {
 	Register(o interface{}) error
 	RegisterByName(name string, o interface{}) error
 
-	Get(name string) (interface{}, bool)
+	Get(name string) (BeanDefinition, bool)
 	GetByType(o interface{}) bool
 
-	Scan(func(key string, value interface{}) bool)
+	Scan(func(key string, value BeanDefinition) bool)
 }
 
 type DefaultContainer struct {
@@ -31,45 +31,51 @@ func New() *DefaultContainer {
 }
 
 func (c *DefaultContainer) Register(o interface{}) error {
-	return c.RegisterByName(utils.GetObjectName(o), o)
+	return c.RegisterByName("", o)
 }
 
 func (c *DefaultContainer) RegisterByName(name string, o interface{}) error {
-	t := reflect.TypeOf(o)
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-		if t.Kind() == reflect.Ptr {
-			return errors.New("o must be a Pointer but get Pointer's Pointer")
-		}
-	} else {
-		return errors.New("o must be a Pointer")
+	beanDefinition, err := createBeanDefinition(o)
+	if err != nil {
+		return err
+	}
+	if beanDefinition == nil {
+		return errors.New("beanDefinition is nil. ")
 	}
 
-	_, loaded := c.objectPool.LoadOrStore(name, o)
+	if name == "" {
+		name = utils.GetObjectName(o)
+		// func
+		if name == "" {
+			name = beanDefinition.Name()
+		}
+	}
+	_, loaded := c.objectPool.LoadOrStore(name, beanDefinition)
 	if loaded {
 		return errors.New(name + " bean is exists. ")
 	}
 	return nil
 }
 
-func (c *DefaultContainer) Get(name string) (interface{}, bool) {
-	return c.objectPool.Load(name)
+func (c *DefaultContainer) Get(name string) (BeanDefinition, bool) {
+	o, load := c.objectPool.Load(name)
+	if load {
+		return o.(BeanDefinition), load
+	}
+	return nil, false
 }
 
 func (c *DefaultContainer) GetByType(o interface{}) bool {
 	v := reflect.ValueOf(o)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	o, ok := c.Get(utils.GetTypeName(v.Type()))
+	d, ok := c.Get(utils.GetTypeName(v.Type()))
 	if ok {
-		utils.SafeSet(v, reflect.ValueOf(o))
+		v.Set(d.Value())
 	}
 	return false
 }
 
-func (c *DefaultContainer) Scan(f func(key string, value interface{}) bool) {
+func (c *DefaultContainer) Scan(f func(key string, value BeanDefinition) bool) {
 	c.objectPool.Range(func(key, value interface{}) bool {
-		return f(key.(string), value)
+		return f(key.(string), value.(BeanDefinition))
 	})
 }

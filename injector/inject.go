@@ -99,17 +99,17 @@ func (injector *DefaultInjector) injectInterface(c container.Container, v reflec
 	}
 	o, ok := c.Get(name)
 	if ok {
-		v.Set(reflect.ValueOf(o))
+		v.Set(o.Value())
 		return nil
 	} else {
 		//自动注入
-		var matchValues []interface{}
-		c.Scan(func(key string, value interface{}) bool {
+		var matchValues []container.BeanDefinition
+		c.Scan(func(key string, value container.BeanDefinition) bool {
 			//指定名称注册的对象直接跳过，因为在container.Get未满足，所以认定不是用户想要注入的对象
-			if key != utils.GetObjectName(value) {
+			if key != value.Name() {
 				return true
 			}
-			ot := reflect.TypeOf(value)
+			ot := value.Type()
 			if ot.Implements(vt) {
 				matchValues = append(matchValues, value)
 				if len(matchValues) > 1 {
@@ -120,9 +120,9 @@ func (injector *DefaultInjector) injectInterface(c container.Container, v reflec
 			return true
 		})
 		if len(matchValues) == 1 {
-			v.Set(reflect.ValueOf(matchValues[0]))
+			v.Set(matchValues[0].Value())
 			// cache to container
-			err := c.RegisterByName(utils.GetTypeName(vt), matchValues[0])
+			err := c.RegisterByName(utils.GetTypeName(vt), matchValues[0].Interface())
 			if err != nil {
 				injector.logger.Warnln(err)
 			}
@@ -139,7 +139,7 @@ func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.V
 	}
 	o, ok := c.Get(name)
 	if ok {
-		ov := reflect.ValueOf(o)
+		ov := o.Value()
 		if vt.Kind() == reflect.Ptr {
 			v.Set(ov)
 		} else {

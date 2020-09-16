@@ -10,7 +10,6 @@ import (
 	"github.com/xfali/neve/container"
 	"github.com/xfali/neve/injector"
 	"github.com/xfali/neve/processor"
-	"github.com/xfali/neve/utils"
 	"github.com/xfali/xlog"
 	"sync"
 	"sync/atomic"
@@ -94,7 +93,7 @@ func (ctx *DefaultApplicationContext) isInitializing() bool {
 }
 
 func (ctx *DefaultApplicationContext) RegisterBean(o interface{}) error {
-	return ctx.RegisterBeanByName(utils.GetObjectName(o), o)
+	return ctx.RegisterBeanByName("", o)
 }
 
 func (ctx *DefaultApplicationContext) RegisterBeanByName(name string, o interface{}) error {
@@ -105,7 +104,13 @@ func (ctx *DefaultApplicationContext) RegisterBeanByName(name string, o interfac
 	if o == nil {
 		return nil
 	}
-	err := ctx.container.RegisterByName(name, o)
+	var err error
+	if name == "" {
+		err = ctx.container.Register(o)
+	} else {
+		err = ctx.container.RegisterByName(name, o)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -173,10 +178,12 @@ func (ctx *DefaultApplicationContext) NotifyListeners(e ApplicationEvent) {
 }
 
 func (ctx *DefaultApplicationContext) injectAll() {
-	ctx.container.Scan(func(key string, value interface{}) bool {
-		err := ctx.injector.Inject(ctx.container, value)
-		if err != nil {
-			ctx.logger.Errorln("Inject failed: ", err)
+	ctx.container.Scan(func(key string, value container.BeanDefinition) bool {
+		if value.IsObject() {
+			err := ctx.injector.Inject(ctx.container, value.Interface())
+			if err != nil {
+				ctx.logger.Errorln("Inject failed: ", err)
+			}
 		}
 		return true
 	})
