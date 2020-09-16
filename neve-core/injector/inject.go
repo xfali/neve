@@ -8,7 +8,6 @@ package injector
 import (
 	"errors"
 	"github.com/xfali/neve/neve-core/container"
-	"github.com/xfali/neve/neve-utils/refection"
 	"github.com/xfali/neve/neve-utils/reflection"
 	"github.com/xfali/xlog"
 	"reflect"
@@ -96,7 +95,7 @@ func (injector *DefaultInjector) injectStructFields(c container.Container, v ref
 func (injector *DefaultInjector) injectInterface(c container.Container, v reflect.Value, name string) error {
 	vt := v.Type()
 	if name == "" {
-		name = refection.GetTypeName(vt)
+		name = reflection.GetTypeName(vt)
 	}
 	o, ok := c.Get(name)
 	if ok {
@@ -123,20 +122,20 @@ func (injector *DefaultInjector) injectInterface(c container.Container, v reflec
 		if len(matchValues) == 1 {
 			v.Set(matchValues[0].Value())
 			// cache to container
-			err := c.RegisterByName(refection.GetTypeName(vt), matchValues[0].Interface())
+			err := c.RegisterByName(reflection.GetTypeName(vt), matchValues[0].Interface())
 			if err != nil {
 				injector.logger.Warnln(err)
 			}
 			return nil
 		}
 	}
-	return errors.New("Inject nothing, cannot find any Implementation: " + refection.GetTypeName(vt))
+	return errors.New("Inject nothing, cannot find any Implementation: " + reflection.GetTypeName(vt))
 }
 
 func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.Value, name string) error {
 	vt := v.Type()
 	if name == "" {
-		name = refection.GetTypeName(vt)
+		name = reflection.GetTypeName(vt)
 	}
 	o, ok := c.Get(name)
 	if ok {
@@ -145,7 +144,7 @@ func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.V
 			v.Set(ov)
 		} else {
 			// 只允许注入指针类型
-			injector.logger.Errorf("Inject struct: [%s] failed: field must be pointer. ", refection.GetTypeName(vt))
+			injector.logger.Errorf("Inject struct: [%s] failed: field must be pointer. ", reflection.GetTypeName(vt))
 			//v.Set(ov.Elem())
 		}
 		return nil
@@ -154,7 +153,7 @@ func (injector *DefaultInjector) injectStruct(c container.Container, v reflect.V
 	if injector.recursive {
 		return injector.injectStructFields(c, v)
 	} else {
-		return errors.New("Inject nothing, cannot find any instance of  " + refection.GetTypeName(vt))
+		return errors.New("Inject nothing, cannot find any instance of  " + reflection.GetTypeName(vt))
 	}
 }
 

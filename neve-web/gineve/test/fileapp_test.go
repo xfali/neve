@@ -9,14 +9,13 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/xfali/fig"
-	"github.com/xfali/neve"
-	"github.com/xfali/neve/container"
-	"github.com/xfali/neve/log"
+	"github.com/xfali/neve/neve-core/container"
+	"github.com/xfali/neve/neve-utils/log"
 	"github.com/xfali/neve/neve-core"
-	"github.com/xfali/neve/processor"
-	"github.com/xfali/neve/web/ginImpl"
-	"github.com/xfali/neve/web/ginImpl/midware"
-	"github.com/xfali/neve/web/result"
+	"github.com/xfali/neve/neve-core/processor"
+	"github.com/xfali/neve/neve-web/gineve"
+	"github.com/xfali/neve/neve-web/gineve/midware"
+	"github.com/xfali/neve/neve-web/result"
 	"net/http"
 	"testing"
 )
@@ -41,7 +40,7 @@ func (b *webBean) Register(engine gin.IRouter) {
 }
 
 func TestWebAndValue(t *testing.T) {
-	neve.RegisterProcessor(ginImpl.NewProcessor(), processor.NewValueProcessor(), &testProcess{})
+	neve.RegisterProcessor(gineve.NewProcessor(), processor.NewValueProcessor(), &testProcess{})
 
 	app := neve.NewFileConfigApplication("assets/config-test.json")
 	app.RegisterBean(&webBean{})
